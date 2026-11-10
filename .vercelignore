@@ -1,0 +1,7 @@
+# Not part of the live game
+.claude
+framer
+serve.js
+.env.local
+.env*.local
+.vercel

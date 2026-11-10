@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sprite Lab — Varun's District</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Playfair+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; padding: 32px 20px 60px; background: #222426; color: #f4f1ff; font-family: 'Geist Mono', monospace; }
+  main { max-width: 1040px; margin: 0 auto; }
+  h1 { font: 400 40px 'Playfair Display', serif; margin: 0 0 6px; } h1 i { color: #b79bff; }
+  p { color: #9a98a8; font-size: 12px; margin: 0 0 28px; } a { color: #d9f5dc; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+  .c { border: 1px solid #3a3c40; border-radius: 12px; padding: 16px; background: #1b1d1f; }
+  .c h2 { font: 400 22px 'Playfair Display', serif; margin: 0; } .c small { color: #9a98a8; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; }
+  canvas { image-rendering: pixelated; background: #2c2e45; border-radius: 6px; display: block; }
+  .anims { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+  .anims figure { margin: 0; text-align: center; font-size: 9px; color: #9a98a8; letter-spacing: .06em; } .anims canvas { margin-bottom: 4px; }
+  .sheet { width: 100%; height: auto; }
+  button { margin-top: 10px; padding: 7px 12px; border-radius: 999px; border: 0; background: #f4f1ff; font: 500 11px 'Geist Mono', monospace; cursor: pointer; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Sprite <i>Lab</i></h1>
+  <p>Every character is generated in <code>src/sprites.js</code>. Each sheet is 6×4 frames of 16×24px: rows = down, side, up, emote · columns = idle ×2, walk ×4. <a href="index.html">← Back to the game</a></p>
+  <div class="grid" id="grid"></div>
+</main>
+<script src="src/sprites.js"></script>
+<script>
+  const { FW, FH, chars, mk } = SPR, live = [];
+  const grid = document.getElementById('grid');
+  function card(title, sub) { const d = document.createElement('div'); d.className = 'c'; d.innerHTML = `<h2>${title}</h2><small>${sub}</small><div class="anims"></div>`; grid.appendChild(d); return d; }
+  function preview(parent, label, w, h, drawFn) {
+    const f = document.createElement('figure'), c = mk(w, h); c.style.width = w * 4 + 'px'; c.style.height = h * 4 + 'px';
+    f.appendChild(c); f.appendChild(document.createTextNode(label)); parent.querySelector('.anims').appendChild(f);
+    live.push(t => { const g = c.getContext('2d'); g.clearRect(0, 0, w, h); drawFn(g, t); });
+  }
+  function sheetView(parent, sheet, name) {
+    const c = mk(sheet.width, sheet.height); c.className = 'sheet'; c.getContext('2d').drawImage(sheet, 0, 0); parent.appendChild(c);
+    const b = document.createElement('button'); b.textContent = 'Download PNG';
+    b.onclick = () => { const a = document.createElement('a'); a.download = name + '.png'; a.href = sheet.toDataURL(); a.click(); };
+    parent.appendChild(b);
+  }
+  for (const id in chars) {
+    const ch = chars[id], d = card(ch.spec.name, ch.spec.role);
+    [['idle', 'idle_down'], ['walk ↓', 'walk_down'], ['walk →', 'walk_side'], ['walk ↑', 'walk_up'], [ch.spec.emoteName, 'emote']]
+      .forEach(([label, anim]) => preview(d, label, FW, FH, (g, t) => SPR.frame(g, id, anim, t, 0, 0)));
+    sheetView(d, ch.sheet, id);
+  }
+  { const d = card('Kerning', 'Park cat');
+    preview(d, 'idle', 16, 12, (g, t) => g.drawImage(SPR.cat, (Math.floor(t * 1.2) % 2) * 16, 0, 16, 12, 0, 0, 16, 12));
+    preview(d, 'walk', 16, 12, (g, t) => g.drawImage(SPR.cat, (2 + Math.floor(t * 8) % 4) * 16, 0, 16, 12, 0, 0, 16, 12));
+    sheetView(d, SPR.cat, 'cat'); }
+  { const d = card('Spark', 'Light-casting companion');
+    preview(d, 'twinkle', 11, 11, (g, t) => g.drawImage(SPR.spark, (Math.floor(t * 7) % 4) * 11, 0, 11, 11, 0, 0, 11, 11));
+    sheetView(d, SPR.spark, 'spark'); }
+  (function loop(now) { live.forEach(f => f(now / 1000)); requestAnimationFrame(loop); })(0);
+</script>
+</body>
+</html>
